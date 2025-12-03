@@ -42,6 +42,7 @@ test = [
     "pytest-cov",
     "pytest",
     "ruff",
+    "pytest-mock"
 ]
 
 [project.readme]

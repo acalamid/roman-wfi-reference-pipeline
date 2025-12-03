@@ -1,5 +1,4 @@
 import os
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -87,13 +86,13 @@ class TestDark:
         with pytest.raises(TypeError):
             Dark(meta_data=valid_meta_data, ref_type_data='invalid_ref_data')
 
-    def test_make_rate_image_from_data_cube_default_fit_order(self, dark_object_with_data_cube):
+    def test_make_rate_image_from_data_cube_default_fit_order(self, dark_object_with_data_cube, mocker):
         """
         Test that the method make_rate_image_from_data_cube works with default fit_order.
         """
         mock_return_image = np.random.rand(3, 3)  # Create a dummy dark rate image
         mock_return_error_image = np.random.rand(3, 3)  # Dummy error image
-        dark_object_with_data_cube.data_cube.fit_cube = MagicMock()
+        dark_object_with_data_cube.data_cube.fit_cube = mocker.MagicMock()
         dark_object_with_data_cube.data_cube.rate_image = mock_return_image
         dark_object_with_data_cube.data_cube.rate_image_err = mock_return_error_image
 
@@ -110,7 +109,7 @@ class TestDark:
         assert dark_object_with_data_cube.dark_rate_image.shape == mock_return_image.shape
         assert dark_object_with_data_cube.dark_rate_image_error.shape == mock_return_error_image.shape
 
-    def test_make_rate_image_from_data_cube_custom_fit_order(self, dark_object_with_data_cube):
+    def test_make_rate_image_from_data_cube_custom_fit_order(self, dark_object_with_data_cube, mocker):
         """
         Test that the method make_rate_image_from_data_cube works with a custom fit_order.
         """
@@ -118,7 +117,7 @@ class TestDark:
         mock_return_image = np.random.rand(3, 3)  # Create a dummy dark rate image
 
         # Mock fit_cube to set rate_image in the data_cube
-        dark_object_with_data_cube.data_cube.fit_cube = MagicMock()
+        dark_object_with_data_cube.data_cube.fit_cube = mocker.MagicMock()
         dark_object_with_data_cube.data_cube.rate_image = mock_return_image  # Simulate setting the image after fitting
 
         dark_object_with_data_cube.make_rate_image_from_data_cube(fit_order=custom_fit_order)

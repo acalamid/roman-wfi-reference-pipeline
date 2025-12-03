@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 import numpy as np
 import pytest
 
@@ -82,13 +80,14 @@ class TestReadNoise:
         with pytest.raises(TypeError):
             ReadNoise(meta_data=valid_meta_data, ref_type_data='invalid_ref_data')
 
-    @patch("asdf.open")
-    def test_readnoise_instantiation_with_file_list(self, mock_asdf_open, valid_meta_data):
+    def test_readnoise_instantiation_with_file_list(self, valid_meta_data, mocker):
         """
         Test that ReadNoise object handles file list input correctly.
         """
+        mock_asdf_open = mocker.patch("asdf.open")
+
         # Create a mock for the file content with the expected structure
-        mock_asdf_file = MagicMock()
+        mock_asdf_file = mocker.MagicMock()
         mock_asdf_file.tree = {
             "roman": {
                 "data": np.zeros((3, 10, 10))  # Mocking a datacube with 10 reads
@@ -103,12 +102,12 @@ class TestReadNoise:
 
         assert readnoise_obj.num_files == 2
 
-    def test_make_readnoise_image_using_cds_noise(self, readnoise_object_with_data_cube):
+    def test_make_readnoise_image_using_cds_noise(self, readnoise_object_with_data_cube, mocker):
         """
         Test that make_readnoise_image can be modified to use CDS noise calculation.
         """
         # Mock the comp_cds_noise method to simulate CDS noise calculation
-        readnoise_object_with_data_cube.comp_cds_noise = MagicMock(return_value='mock_cds_noise_image')
+        readnoise_object_with_data_cube.comp_cds_noise = mocker.MagicMock(return_value='mock_cds_noise_image')
 
         # Modify the method for CDS noise calculation
         readnoise_object_with_data_cube.readnoise_image = readnoise_object_with_data_cube.comp_cds_noise()

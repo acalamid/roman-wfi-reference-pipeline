@@ -1,5 +1,4 @@
 import os
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -87,13 +86,14 @@ class TestFlat:
         with pytest.raises(TypeError):
             Flat(meta_data=valid_meta_data, ref_type_data='invalid_ref_data')
 
-    @patch("asdf.open")
-    def test_flat_instantiation_with_file_list(self, mock_asdf_open, valid_meta_data):
+    def test_flat_instantiation_with_file_list(self, valid_meta_data, mocker):
         """
         Test that Flat object handles file list input correctly.
         """
+        mock_asdf_open = mocker.patch("asdf.open")
+
         # Create a mock for the file content with the expected structure
-        mock_asdf_file = MagicMock()
+        mock_asdf_file = mocker.MagicMock()
         mock_asdf_file.tree = {
             "roman": {
                 "data": np.zeros((10, 10))  # Mocking data

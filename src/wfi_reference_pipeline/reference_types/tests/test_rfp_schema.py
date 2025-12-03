@@ -1,5 +1,4 @@
 import os
-import unittest
 
 import asdf
 import numpy as np
@@ -32,7 +31,7 @@ skip_on_github = pytest.mark.skipif(
     reason="Skip this test on GitHub Actions, too big"
 )
 
-class TestSchema(unittest.TestCase):
+class TestSchema():
     """
     Class test suite for all RFP schema tests
     """
