@@ -50,13 +50,13 @@ def dark_rate_image_3_by_3():
     row that is below.
 
     array flags = [ hot, warm, good,
-                    hot, warm, dead,
-                    good, dead, dead]
+                    hot, warm, good,
+                    good, good, good]
     """
     return np.array([
-        [2.1, 1.1, 0.2],  # should return hot, warm, no flag set
-        [2.0, 1.0, 0.1],  # should return hot, warm, dead
-        [0.5, 0.0, -0.1],  # should return no flag set, dead, dead
+        [2.1, 1.1, 0.02],  # should return hot, warm, no flag set
+        [2.0, 1.0, 0.01],  # should return hot, warm, no flag set
+        [0.05, 0.01, 0.01],  # should return no flag set, no flag set, no flag set
     ])
 
 
@@ -128,56 +128,6 @@ class TestDark:
         assert np.array_equal(dark_object_with_data_cube.dark_rate_image,
                               mock_return_image)  # Check the populated image
 
-    @skip_on_github
-    def test_make_ma_table_resampled_data_with_read_pattern(self, dark_object_with_data_cube):
-        """
-        Test the make_ma_table_resampled_data method with a valid read pattern.
-        """
-        read_pattern = [[1, 2], [3, 4], [5]]
-        dark_object_with_data_cube.data_cube.data = np.random.random((5, DETECTOR_PIXEL_X_COUNT, DETECTOR_PIXEL_Y_COUNT))
-        dark_object_with_data_cube.data_cube.time_array = np.arange(5)
-        dark_object_with_data_cube.make_ma_table_resampled_data(read_pattern=read_pattern)
-        assert dark_object_with_data_cube.num_resultants == len(read_pattern)
-        assert dark_object_with_data_cube.resampled_data.shape == (3, DETECTOR_PIXEL_X_COUNT, DETECTOR_PIXEL_Y_COUNT)  # 3 resultants
-        assert dark_object_with_data_cube.resultant_tau_array.shape == (3,)
-
-        # Check that the data was averaged correctly
-        for resultant_i, read_frames in enumerate(read_pattern):
-            expected_data = np.mean(dark_object_with_data_cube.data_cube.data[np.array(read_frames) - 1], axis=0)
-            np.testing.assert_array_almost_equal(dark_object_with_data_cube.resampled_data[resultant_i], expected_data)
-
-    @skip_on_github
-    def test_make_ma_table_resampled_data_even_spacing(self, dark_object_with_data_cube):
-        """
-        Test the make_ma_table_resampled_data method with num_resultants and num_reads_per_resultant.
-        """
-        num_resultants = 2
-        num_reads_per_resultant = 2
-        dark_object_with_data_cube.data_cube.data = np.random.random((4, DETECTOR_PIXEL_X_COUNT, DETECTOR_PIXEL_Y_COUNT))
-        dark_object_with_data_cube.data_cube.time_array = np.arange(10)
-        dark_object_with_data_cube.make_ma_table_resampled_data(num_resultants=num_resultants,
-                                                                num_reads_per_resultant=num_reads_per_resultant)
-        assert dark_object_with_data_cube.num_resultants == num_resultants
-        assert dark_object_with_data_cube.resampled_data.shape == (num_resultants, DETECTOR_PIXEL_X_COUNT, DETECTOR_PIXEL_Y_COUNT)
-        assert dark_object_with_data_cube.resultant_tau_array.shape == (num_resultants,)
-
-        # Check that the data was averaged correctly
-        expected_data_1 = np.mean(dark_object_with_data_cube.data_cube.data[0:2], axis=0)
-        expected_data_2 = np.mean(dark_object_with_data_cube.data_cube.data[2:4], axis=0)
-        np.testing.assert_array_almost_equal(dark_object_with_data_cube.resampled_data[0], expected_data_1)
-        np.testing.assert_array_almost_equal(dark_object_with_data_cube.resampled_data[1], expected_data_2)
-
-    def test_make_ma_table_resampled_data_invalid_input(self, dark_object_with_data_cube):
-        """
-        Test the make_ma_table_resampled_data method with invalid inputs to check for errors.
-        """
-        with pytest.raises(TypeError):
-            dark_object_with_data_cube.make_ma_table_resampled_data(num_resultants="invalid", num_reads_per_resultant=2)
-        with pytest.raises(TypeError):
-            dark_object_with_data_cube.make_ma_table_resampled_data(num_resultants=None, num_reads_per_resultant=2)
-        with pytest.raises(ValueError):
-            dark_object_with_data_cube.make_ma_table_resampled_data(num_resultants=1, num_reads_per_resultant=6)
-
     def test_update_data_quality_array(self, valid_meta_data, valid_ref_type_data_cube, dark_rate_image_3_by_3):
         """
         Test the update_data_quality_array method to ensure that it properly updates
@@ -187,7 +137,7 @@ class TestDark:
         # Use dqflags.pixel for defining the expected DQ flags
         dqflag_defs = dqflags.pixel
         dark_obj = Dark(meta_data=valid_meta_data, ref_type_data=valid_ref_type_data_cube)
-        dark_obj.data_cube.rate_image = dark_rate_image_3_by_3
+        dark_obj.dark_rate_image = dark_rate_image_3_by_3
 
         # Initialize the smaller mask array to be same as test_dark_rate_image
         dark_obj.dq_mask = np.zeros(dark_rate_image_3_by_3.shape, dtype=np.uint32)
@@ -196,13 +146,13 @@ class TestDark:
         dark_obj.dqflag_defs = dqflag_defs
 
         # Call the update_data_quality_array method with specified thresholds
-        dark_obj.update_data_quality_array(2.0, 1.0, 0.1)
+        dark_obj.update_data_quality_array(2.0, 1.0)
 
         # Create the expected mask based on the pixel values and threshold comparisons
         expected_mask = np.array([
             [dqflag_defs["HOT"], dqflag_defs["WARM"], dqflag_defs["GOOD"]],
-            [dqflag_defs["HOT"], dqflag_defs["WARM"], dqflag_defs["DEAD"]],
-            [dqflag_defs["GOOD"], dqflag_defs["DEAD"], dqflag_defs["DEAD"]]
+            [dqflag_defs["HOT"], dqflag_defs["WARM"], dqflag_defs["GOOD"]],
+            [dqflag_defs["GOOD"], dqflag_defs["GOOD"], dqflag_defs["GOOD"]]
         ], dtype=np.uint32)
 
         # Assert that the mask array was updated correctly
@@ -216,21 +166,16 @@ class TestDark:
         """
         Test that the data model tree is correctly populated in the Dark object.
         """
-        dark_object_with_data_cube.resampled_data = valid_ref_type_data_cube
         dark_object_with_data_cube.dark_rate_image = dark_rate_image_3_by_3
         dark_object_with_data_cube.dark_rate_image_error = dark_rate_image_3_by_3
         data_model_tree = dark_object_with_data_cube.populate_datamodel_tree()
 
         # Assuming the Flat data model includes:
         assert 'meta' in data_model_tree
-        assert 'data' in data_model_tree
         assert 'dark_slope' in data_model_tree
         assert 'dark_slope_error' in data_model_tree
         assert 'dq' in data_model_tree
 
-        # Check the shape and dtype of the 'data' array
-        assert data_model_tree['data'].shape == (5, DETECTOR_PIXEL_X_COUNT, DETECTOR_PIXEL_Y_COUNT)
-        assert data_model_tree['data'].dtype == np.float32
         # Check the shape and dtype of the 'dark_slope' array
         assert data_model_tree['dark_slope'].shape == (3, 3)
         assert data_model_tree['dark_slope'].dtype == np.float32
