@@ -3,7 +3,14 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+import asdf
+
+import os 
+import stat
+
 from wfi_reference_pipeline.reference_types.reference_type import ReferenceType
+
+## TODO: check why the tests are slow
 
 
 class DummyReferenceType(ReferenceType):
@@ -15,11 +22,20 @@ class DummyReferenceType(ReferenceType):
         return super().update_data_quality_array()
     
     def populate_datamodel_tree(self):
-        return super().populate_datamodel_tree()
+        tree = {
+            "metadata" : {
+                "a" : "A",
+                "b" : "B",
+            },
+            "date" : "12-12-2025"
+            
+        }
+        return tree 
 
 
 # NOTE: not using make_test_meta because we want to make invalid metadata, also because we don't want to add another metadata type for dummy (maybe add in test)
 
+# TODO: check to make sure making these kinds of constants as a fixture is a good idea (also for like datatree/perms)
 @pytest.fixture 
 def valid_dummy_metadata():
 
@@ -51,6 +67,18 @@ def valid_outfile(tmp_path):
     return outfile
 
 @pytest.fixture
+def valid_datatree():
+    tree = {
+            "metadata" : {
+                "c" : "ABCD",
+                "d" : "3",
+            },
+            "date" : "10-30-2020"
+            
+        }
+    return tree
+
+@pytest.fixture
 def valid_dummy_ref(valid_dummy_metadata, valid_dummy_filelist):
     
     ref_type = DummyReferenceType(meta_data=valid_dummy_metadata, file_list=valid_dummy_filelist)
@@ -68,9 +96,7 @@ def valid_dummy_ref_with_outfile_clobber(valid_dummy_metadata, valid_dummy_filel
     ref_type = DummyReferenceType(meta_data=valid_dummy_metadata, file_list=valid_dummy_filelist, outfile=valid_outfile, clobber=True)
     return ref_type
 
-## TODO: add fixture for adding files
-
-## TODO: check if this is a reasonable fixture 
+## TODO: check if this is a reasonable fixture (probably replace with a factory)
 
 
 ### Initialization Tests ###
@@ -170,4 +196,58 @@ def test_check_outfile_clobber_no_file(valid_dummy_ref_with_outfile_clobber, val
 
 ### Generate Outfile Tests ###
 
-# TODO
+def test_generate_outfile_no_outfile(valid_dummy_ref):
+    with pytest.raises(ValueError):
+        valid_dummy_ref.generate_outfile()
+
+def test_generate_outfile_datamodel_default_perms(valid_dummy_ref_with_outfile, valid_datatree, valid_outfile):
+
+    valid_dummy_ref_with_outfile.generate_outfile(datamodel_tree=valid_datatree)
+
+    default_perms = 0o666
+
+    assert valid_outfile.exists()
+    assert stat.S_IMODE(os.stat(valid_outfile).st_mode) == default_perms
+    with asdf.open(valid_outfile) as af:
+        assert af.tree["roman"]["metadata"]["c"] == "ABCD"
+        assert af.tree["roman"]["metadata"]["d"] == "3"
+        assert af.tree["roman"]["date"] == "10-30-2020"
+
+def test_generate_outfile_datamodel_set_perms(valid_dummy_ref_with_outfile, valid_datatree, valid_outfile):
+
+    perms = 0o644
+
+    valid_dummy_ref_with_outfile.generate_outfile(datamodel_tree=valid_datatree, file_permission=perms)
+
+    assert valid_outfile.exists()
+    assert stat.S_IMODE(os.stat(valid_outfile).st_mode) == perms
+    with asdf.open(valid_outfile) as af:
+        assert af.tree["roman"]["metadata"]["c"] == "ABCD"
+        assert af.tree["roman"]["metadata"]["d"] == "3"
+        assert af.tree["roman"]["date"] == "10-30-2020"
+
+def test_generate_outfile_generate_default_perms(valid_dummy_ref_with_outfile, valid_outfile):
+
+    default_perms = 0o666
+
+    valid_dummy_ref_with_outfile.generate_outfile()
+
+    assert valid_outfile.exists()
+    assert stat.S_IMODE(os.stat(valid_outfile).st_mode) == default_perms
+    with asdf.open(valid_outfile) as af:
+        assert af.tree["roman"]["metadata"]["a"] == "A"
+        assert af.tree["roman"]["metadata"]["b"] == "B"
+        assert af.tree["roman"]["date"] == "12-12-2025"
+
+def test_generate_outfile_generate_set_perms(valid_dummy_ref_with_outfile, valid_outfile):
+
+    perms = 0o644
+
+    valid_dummy_ref_with_outfile.generate_outfile(file_permission=perms)
+
+    assert valid_outfile.exists()
+    assert stat.S_IMODE(os.stat(valid_outfile).st_mode) == perms
+    with asdf.open(valid_outfile) as af:
+        assert af.tree["roman"]["metadata"]["a"] == "A"
+        assert af.tree["roman"]["metadata"]["b"] == "B"
+        assert af.tree["roman"]["date"] == "12-12-2025"
