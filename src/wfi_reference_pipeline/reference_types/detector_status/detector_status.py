@@ -108,16 +108,9 @@ class DetectorStatus(ReferenceType):
         """
         Build the Roman datamodel tree for the detector status reference.
         """
-        try:
-            # Placeholder until official datamodel exists
-            detector_status_ref = rds.DetectorStatus()
-        except AttributeError:
-            detector_status_ref = {"meta": {}, 
-                                   "status_info": {}
-                                   }
+        det_status_datamodel_tree = rds.DetectorstatusRef()
+        det_status_datamodel_tree["meta"] = self.meta_data.export_asdf_meta()
+        det_status_datamodel_tree["status_info"] = self.status_info_dict
 
-        detector_status_ref["meta"] = self.meta_data.export_asdf_meta()
-        detector_status_ref["status_info"] = self.status_info_dict
-
-        return detector_status_ref
+        return det_status_datamodel_tree
     
