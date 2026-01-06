@@ -16,8 +16,6 @@ class WFIMetaDark(WFIMetadata):
     """
 
     # These are required reftype specific
-    ma_table_name: str
-    ma_table_number: int
     mode: InitVar[Optional[str]] = ""
     # TODO type is a reserved word in python. Can we look at type, reftype, p_exp_type, WFI_TYPE for another word/key?
     type: InitVar[Optional[str]] = ""
@@ -62,9 +60,7 @@ class WFIMetaDark(WFIMetadata):
                            'optical_element': ','.join(self.ref_optical_element) #TODO determine how asdf validate handles multiple optical elements, comma separated?/ # Ref type specific meta
                            },
             # Ref type specific meta
-            'exposure': {'ma_table_name': self.ma_table_name,
-                        'ma_table_number': self.ma_table_number,
-                        'type': self.type,
+            'exposure': {'type': self.type,
                         'p_exptype': self.p_exptype
                         }
         }
