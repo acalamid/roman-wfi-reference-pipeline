@@ -12,8 +12,8 @@ class WFIMetaIntegralNonLinearity(WFIMetadata):
     All Fields are required and positional with base class fields first
     """
     # These are required reftype specific
-    n_channels: str
-    n_pixels_per_channel: str
+    n_channels: int
+    n_pixels_per_channel: int
 
     def __post_init__(self):
         super().__post_init__()
