@@ -7,7 +7,6 @@ from datetime import datetime
 import asdf
 import numpy as np
 import psutil
-from astropy import units as u
 from astropy.stats import sigma_clip
 
 from wfi_reference_pipeline.constants import (
@@ -77,6 +76,7 @@ class SuperDarkBatches(SuperDark):
             do_sigma_clipping=True,
         ):
         """
+        TODO: We will want to rearrange the variable sand figure out default values (Rick PR comment)
         This method does a file I/O open, read, and append to a temporary cube, sigma clip, and then average
         approach for every read in both short and long darks in creating the super dark cube. Starting with
         read index 0 all files that have the read index in the allowed range will be opened and the frame from
@@ -94,7 +94,9 @@ class SuperDarkBatches(SuperDark):
         long_batch_size: int, default = 4
             Number of long dark files to process in parallel at a time.
         do_sigma_clip: bool, default = True
-            Perform sigma clipping on each read before taking the mean
+            Perform sigma clipping on each read before taking the mean,
+            Note that this is only optional for "Batches". "Dynamic" 
+            automatically performs sigma-clipping.
         """
         current_datetime = datetime.now()
         logging.info(f"Starting super dark batches at: {current_datetime}")
@@ -109,7 +111,6 @@ class SuperDarkBatches(SuperDark):
         # Going into each file for every i'th read or read_i index.
         for read_i in range(0, self._superdark_num_reads):
             print(f"On read {read_i} of {self._superdark_num_reads}")
-            timing_method_file_loop_start = time.time()
             logging.debug(f"On read {read_i} of {self._superdark_num_reads}")
 
             # Determine the number of files to process for the current read index.
@@ -146,13 +147,10 @@ class SuperDarkBatches(SuperDark):
                                       f"for read {read_i}")
                         self.read_i_from_all_files[i, :, :] = result
 
-            timing_method_file_loop_end = time.time()
-            elapsed_file_loop_time = timing_method_file_loop_end - timing_method_file_loop_start
-            logging.debug(f"File loop elapsed time: {elapsed_file_loop_time}")
+            logging.debug("File loop completed")
 
             if do_sigma_clipping:
                 logging.debug("Beginning sigma-clipping")
-                timing_start_sigmaclipmean = time.time()
 
                 if np.isnan(self.read_i_from_all_files[i, :, :]).any():
                     logging.debug("NaNs found in read_i_from_all_files data cube")
@@ -165,13 +163,6 @@ class SuperDarkBatches(SuperDark):
                                            axis=0,
                                            masked=False,
                                            copy=False)
-
-                timing_end_sigmaclipmean = time.time()
-                time_sigmaclipmean = timing_end_sigmaclipmean - timing_start_sigmaclipmean
-                logging.debug(f"Sigma clip and average time: {time_sigmaclipmean:.2f} seconds")
-
-                time_fileloop_and_sigmaclipmean = timing_end_sigmaclipmean - timing_method_file_loop_start
-                logging.debug(f"File loop and sigma clip and average time: {time_fileloop_and_sigmaclipmean:.2f} seconds")
 
                 if np.isnan(clipped_reads).any():
                     logging.debug("NaNs found in sigma clipped reads cube.")
@@ -188,7 +179,7 @@ class SuperDarkBatches(SuperDark):
 
         timing_end_method_e = time.time()
         elapsed_time = timing_end_method_e - timing_start_method_e
-        logging.info(f"Total time taken for method e: {elapsed_time:.2f} seconds")
+        logging.info(f"Total time taken for generate_superdark: {elapsed_time:.2f} seconds")
 
 
 def get_mem_usage():
@@ -221,16 +212,12 @@ def get_read_from_file(file_path, read_i):
     np.ndarray
         Array of data for the given read index.
     """
-
     try:
         with asdf.open(file_path, memmap=True) as af:
             logging.debug(f"Opening file {file_path}")
-            if isinstance(af.tree['roman']['data'], u.Quantity):  # Only access data from quantity object.
-                read = af.tree['roman']['data'][read_i, :, :].value
-                return read
-            else:
-                read = af.tree['roman']['data'][read_i, :, :]
-                return read
+            read = af.tree['roman']['data'][read_i, :, :]
+            return read
+
     except (FileNotFoundError, IOError, PermissionError, ValueError) as e:
         logging.warning(f"Could not open {file_path} - {e}")
 
