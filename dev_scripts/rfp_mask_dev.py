@@ -43,7 +43,7 @@ def test_full_mask(outpath, flats):
     tmp.meta_mask.use_after = '2020-05-01T00:00:00.000'
     tmp.meta_mask.author = "A user"
     tmp.meta_mask.instrument_detector = DET
-    tmp.meta_mask.description = "Testing new mask from dark modules."
+    tmp.meta_mask.description = "Testing new mask from dark modules. "
 
     rfp_mask = Mask(meta_data=tmp.meta_mask,
                     file_list=longdarks,
