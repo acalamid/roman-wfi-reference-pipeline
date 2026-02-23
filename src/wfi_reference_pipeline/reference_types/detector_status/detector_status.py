@@ -24,6 +24,11 @@ class DetectorStatus(ReferenceType):
     from wfi_reference_pipeline.resources.make_dev_meta import MakeDevMeta
 
     tmp = MakeDevMeta(ref_type='DETECTORSTATUS')
+    tmp.meta_detector_status.pedigree = 'GROUND'
+    tmp.meta_detector_status.instrument_detector = 'WFI01'
+    tmp.meta_detector_status.use_after = '2023-08-01T00:00:00.000'
+    tmp.meta_detector_status.author = 'Rick Cosentino'
+    tmp.meta_detector_status.description = 'New calibration reference file to inform ground systems of the status for processing on all WFI detectors. All set to True when healthy and working and False if an issue with processing data currently exists, i.e. the stuck bit on WFI08 during SCIPA for instance.'
     rfp_det_stat = DetectorStatus(meta_data=tmp.meta_detector_status)   
     rfp_det_stat.generate_outfile()
     """
@@ -108,16 +113,9 @@ class DetectorStatus(ReferenceType):
         """
         Build the Roman datamodel tree for the detector status reference.
         """
-        try:
-            # Placeholder until official datamodel exists
-            detector_status_ref = rds.DetectorStatus()
-        except AttributeError:
-            detector_status_ref = {"meta": {}, 
-                                   "status_info": {}
-                                   }
+        det_status_datamodel_tree = rds.DetectorstatusRef()
+        det_status_datamodel_tree["meta"] = self.meta_data.export_asdf_meta()
+        det_status_datamodel_tree["status_info"] = self.status_info_dict
 
-        detector_status_ref["meta"] = self.meta_data.export_asdf_meta()
-        detector_status_ref["status_info"] = self.status_info_dict
-
-        return detector_status_ref
+        return det_status_datamodel_tree
     

@@ -63,17 +63,11 @@ class MakeDevMeta:
         self.meta_aperturecorrection = WFIMetaApertureCorrection(*meta_data)
 
     def _create_dev_meta_dark(self, meta_data):
-        ngroups = 6
-        nframes = 8
-        groupgap = 0
-        ma_table_name = "High Latitude Imaging Survey"
-        ma_table_number = 1
         mode = WFI_MODE_WIM
         type = WFI_TYPE_IMAGE
         ref_optical_element = ["F158"]
 
-        dark_meta_data = [ngroups, nframes, groupgap, ma_table_name, ma_table_number,
-                          mode, type, ref_optical_element]
+        dark_meta_data = [mode, type, ref_optical_element]
         self.meta_dark = WFIMetaDark(*meta_data, *dark_meta_data)
         
     def _create_dev_meta_dark_decay_signal(self, meta_data):
@@ -95,8 +89,10 @@ class MakeDevMeta:
         self.meta_gain = WFIMetaGain(*meta_data)
 
     def _create_dev_meta_integral_non_linearity(self, meta_data):
-        n_channels = '32'
-        n_pixels_per_channel = '128'
+        # There are 32 amplifiers to read 128 pixels at a time. 
+        # https://roman-docs.stsci.edu/data-handbook/wfi-data-levels-and-products/coordinate-systems
+        n_channels = 32
+        n_pixels_per_channel = 128
 
         meta_integral_non_linearity = [n_channels, n_pixels_per_channel]
 

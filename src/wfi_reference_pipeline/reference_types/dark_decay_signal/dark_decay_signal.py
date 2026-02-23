@@ -23,6 +23,11 @@ class DarkDecaySignal(ReferenceType):
     from wfi_reference_pipeline.resources.make_dev_meta import MakeDevMeta
 
     tmp = MakeDevMeta(ref_type='DARKDECAYSIGNAL')
+    tmp.meta_dark_decay_signal.pedigree = 'GROUND'
+    tmp.meta_dark_decay_signal.instrument_detector = 'WFI01'
+    tmp.meta_dark_decay_signal.use_after = '2023-08-01T00:00:00.000'
+    tmp.meta_dark_decay_signal.author = 'Rick Cosentino'
+    tmp.meta_dark_decay_signal.description = 'New calibration reference file that has properties of amplitude and time constant for each WFI detector for an exponential decay dark signal to be removed with romancal.'
     rfp_dark_decay = DarkDecaySignal(meta_data=tmp.meta_dark_decay_signal)
     rfp_dark_decay.generate_outfile()
     """
@@ -70,20 +75,11 @@ class DarkDecaySignal(ReferenceType):
         """
         Create the datamodel tree to be written to ASDF.
         """
-        try:
-            # TODO for when official datamodel exists
-            dark_decay_ref = rds.DarkDecaySignalRef()
-        except AttributeError:
-            dark_decay_ref = {
-                             "meta": {}, 
-                             "decay_table": {}
-                             }
+        darkdecay_datamodel_tree = rds.DarkdecaysignalRef()
+        darkdecay_datamodel_tree["meta"] = self.meta_data.export_asdf_meta()
+        darkdecay_datamodel_tree["decay_table"] = DARK_DECAY_TABLE
 
-        dark_decay_ref["meta"] = self.meta_data.export_asdf_meta()
-        dark_decay_ref["decay_table"] = DARK_DECAY_TABLE
-
-        return dark_decay_ref
-    
+        return darkdecay_datamodel_tree
     
     def calculate_error(self):
         """

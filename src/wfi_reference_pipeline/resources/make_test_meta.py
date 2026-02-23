@@ -62,17 +62,11 @@ class MakeTestMeta:
     """
 
     def _create_test_meta_dark(self, meta_data):
-        ngroups = 1
-        nframes = 1
-        groupgap = 0
-        ma_table_name = "Test ma_table_name"
-        ma_table_number = 0
         mode = WFI_MODE_WIM
         type = WFI_TYPE_IMAGE
         ref_optical_element = ["F158"]
 
-        dark_meta_data = [ngroups, nframes, groupgap, ma_table_name, ma_table_number,
-                          mode, type, ref_optical_element]
+        dark_meta_data = [mode, type, ref_optical_element]
         self.meta_dark = WFIMetaDark(*meta_data, *dark_meta_data)
 
     def _create_test_meta_dark_decay_signal(self, meta_data):
@@ -93,15 +87,15 @@ class MakeTestMeta:
     def _create_test_meta_gain(self, meta_data):
         self.meta_gain = WFIMetaGain(*meta_data)
 
-    def _create_test_meta_intengral_non_linearity(self, meta_data):
-        n_channels = '32'
-        n_pixels_per_channel = '128'
+    def _create_test_meta_integral_non_linearity(self, meta_data):
+        # There are 32 amplifiers to read 128 pixels at a time. 
+        # https://roman-docs.stsci.edu/data-handbook/wfi-data-levels-and-products/coordinate-systems
+        n_channels = 32
+        n_pixels_per_channel = 128
 
         meta_integral_non_linearity = [n_channels, n_pixels_per_channel]
         self.meta_integral_non_linearity = WFIMetaIntegralNonLinearity(*meta_data,
                                                                        *meta_integral_non_linearity)
-
-        self._create_test_meta_intengral_non_linearity = WFIMetaIntegralNonLinearity(*meta_data)
 
     def _create_test_meta_interpixelcapacitance(self, meta_data):
         ref_optical_element = "F158"
@@ -198,7 +192,7 @@ class MakeTestMeta:
             self._create_test_meta_gain(meta_data_params)
 
         if ref_type == REF_TYPE_INTEGRALNONLINEARITY:
-            self._create_test_meta_intengral_non_linearity(meta_data_params)
+            self._create_test_meta_integral_non_linearity(meta_data_params)
 
         if ref_type == REF_TYPE_INVERSELINEARITY:
             self._create_test_meta_inverselinearity(meta_data_params)
