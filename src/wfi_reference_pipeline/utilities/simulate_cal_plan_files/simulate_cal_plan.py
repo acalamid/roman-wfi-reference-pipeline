@@ -215,6 +215,9 @@ class BaseDarkSimulation:
     # The main runner method.
     # ---------------------------------------------------------
     def run(self):
+
+        time_overhead = 10.  # A general overhead time between successive dark exposures that is arbitrary.
+
         for sca in self.scas:
             print(f"\n=== Running SCA {sca} ===")
 
@@ -233,7 +236,7 @@ class BaseDarkSimulation:
 
                 # Advance time
                 current_time += (
-                    self.truncate * WFI_FRAME_TIME[WFI_MODE_WIM] + 10
+                    self.truncate * WFI_FRAME_TIME[WFI_MODE_WIM] + time_overhead
                 ) * u.s
 
 
